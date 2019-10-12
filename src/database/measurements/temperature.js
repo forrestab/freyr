@@ -3,7 +3,6 @@ const Influx = require("influx");
 const schema = {
     measurement: "temperature",
     tags: [
-        "deviceId",
         "location",
         "unit"
     ],
@@ -12,10 +11,10 @@ const schema = {
     }
 };
 
-const createWritePoint = (deviceId, location, unit, value) => {
+const createWritePoint = (location, unit, value) => {
     return {
         measurement: schema.measurement,
-        tags: { deviceId, location, unit },
+        tags: { location, unit },
         fields: { value }
     };
 };

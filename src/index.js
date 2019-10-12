@@ -25,9 +25,9 @@ const GPIO_PORT = 4;
 
     try {
         await dbClient.writePoints([
-            createTemperatureWritePoint("basement-1", "basement", "celcius", temperature),
-            createTemperatureWritePoint("basement-1", "basement", "fahrenheit", toFahrenheit(temperature)),
-            createHumidityWritePoint("basement-1", "basement", humidity)
+            createTemperatureWritePoint("basement", "celcius", temperature),
+            createTemperatureWritePoint("basement", "fahrenheit", toFahrenheit(temperature)),
+            createHumidityWritePoint("basement", humidity)
         ]);
     } catch (error) {
         console.log(error);
