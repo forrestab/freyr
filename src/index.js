@@ -1,17 +1,18 @@
 const sensor = require("node-dht-sensor").promises;
+const fetch = require("node-fetch");
 
 const { createDbClient } = require("./database");
-const { 
-    schema: temperatureSchema, 
-    createWritePoint: createTemperatureWritePoint 
+const {
+    schema: temperatureSchema,
+    createWritePoint: createTemperatureWritePoint
 } = require("./database/measurements/temperature");
-const { 
-    schema: humiditySchema, 
-    createWritePoint: createHumidityWritePoint 
+const {
+    schema: humiditySchema,
+    createWritePoint: createHumidityWritePoint
 } = require("./database/measurements/humidity");
-const { 
-    schema: deviceSchema, 
-    createWritePoint: createDeviceWritePoint 
+const {
+    schema: deviceSchema,
+    createWritePoint: createDeviceWritePoint
 } = require("./database/measurements/device");
 const { toFahrenheit } = require("./converters/temperature/celcius");
 
@@ -35,19 +36,32 @@ const HUMIDITY_THRESHOLD = 50; // percent
         createHumidityWritePoint("basement", humidity)
     ]);
 
+    const results = await dbClient.query(`
+            select status 
+            from device 
+            where location='basement'
+            order by time desc
+            limit 1
+        `);
+    const deviceStatus = results[0].status;
+
     if (humidity > HUMIDITY_THRESHOLD) {
-        // todo, check if device is already on
-        // todo, if off, send ifttt
+        if (!deviceStatus) {
+            await fetch(`https://maker.ifttt.com/trigger/${process.env.EVENT_ON}/with/key/${process.env.IFTTT_TOKEN}`, { method: "POST" });
+            console.log("sent on ifttt");
+        }
 
         await dbClient.writePoints([
             createDeviceWritePoint("basement", true) // on
         ]);
     } else {
-        // todo, check if device is already off
-        // todo, if on, send ifttt
+        if (deviceStatus) {
+            await fetch(`https://maker.ifttt.com/trigger/${process.env.EVENT_OFF}/with/key/${process.env.IFTTT_TOKEN}`, { method: "POST" });
+            console.log("sent off ifttt");
+        }
 
         await dbClient.writePoints([
-            createDeviceWritePoint("basement", false) // on
+            createDeviceWritePoint("basement", false) // off
         ]);
     }
 })();
