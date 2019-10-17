@@ -1,5 +1,5 @@
 const sensor = require("node-dht-sensor").promises;
-const fetch = require("node-fetch");
+const { Client } = require("tplink-smarthome-api");
 
 const { createDbClient } = require("./database");
 const {
@@ -24,6 +24,7 @@ const HUMIDITY_THRESHOLD = 50; // percent
 
 (async () => {
     const { temperature, humidity } = await sensor.read(SENSOR_CODE, GPIO_PORT);
+    console.log(`${toFahrenheit(temperature)}F / ${humidity.toFixed(2)}%`);
     const dbClient = createDbClient(process.env.DB_HOST, process.env.DB_NAME, [
         temperatureSchema,
         humiditySchema,
@@ -36,28 +37,26 @@ const HUMIDITY_THRESHOLD = 50; // percent
         createHumidityWritePoint("basement", humidity)
     ]);
 
-    const results = await dbClient.query(`
-            select status 
-            from device 
-            where location='basement'
-            order by time desc
-            limit 1
-        `);
-    const deviceStatus = results[0].status;
+    const client = new Client();
+    const plug = client.getPlug({ host: process.env.PLUG_IP });
 
     if (humidity > HUMIDITY_THRESHOLD) {
-        if (!deviceStatus) {
-            await fetch(`https://maker.ifttt.com/trigger/${process.env.EVENT_ON}/with/key/${process.env.IFTTT_TOKEN}`, { method: "POST" });
-            console.log("sent on ifttt");
+        if (!await plug.getPowerState()) {
+            await plug.setPowerState(true);
+            console.log("powered on");
+        } else {
+            console.log("already on");
         }
 
         await dbClient.writePoints([
             createDeviceWritePoint("basement", true) // on
         ]);
     } else {
-        if (deviceStatus) {
-            await fetch(`https://maker.ifttt.com/trigger/${process.env.EVENT_OFF}/with/key/${process.env.IFTTT_TOKEN}`, { method: "POST" });
-            console.log("sent off ifttt");
+        if (await plug.getPowerState()) {
+            await plug.setPowerState(false);
+            console.log("powered off");
+        } else {
+            console.log("already off");
         }
 
         await dbClient.writePoints([
