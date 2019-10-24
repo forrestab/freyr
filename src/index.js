@@ -1,67 +1,41 @@
 const sensor = require("node-dht-sensor").promises;
-const fetch = require("node-fetch");
+const { Client } = require("tplink-smarthome-api");
 
-const { createDbClient } = require("./database");
-const {
-    schema: temperatureSchema,
-    createWritePoint: createTemperatureWritePoint
-} = require("./database/measurements/temperature");
-const {
-    schema: humiditySchema,
-    createWritePoint: createHumidityWritePoint
-} = require("./database/measurements/humidity");
-const {
-    schema: deviceSchema,
-    createWritePoint: createDeviceWritePoint
-} = require("./database/measurements/device");
+const { Store } = require("./database");
+const schemas = require("./database/measurements");
 const { toFahrenheit } = require("./converters/temperature/celcius");
 
 require("dotenv").config();
 
-const SENSOR_CODE = 22;
-const GPIO_PORT = 4;
-const HUMIDITY_THRESHOLD = 50; // percent
-
 (async () => {
-    const { temperature, humidity } = await sensor.read(SENSOR_CODE, GPIO_PORT);
-    const dbClient = createDbClient(process.env.DB_HOST, process.env.DB_NAME, [
-        temperatureSchema,
-        humiditySchema,
-        deviceSchema
-    ]);
+    const { temperature, humidity } = await sensor.read(process.env.SENSOR_CODE, process.env.GPIO_PORT);
+    console.log(`${toFahrenheit(temperature)}F / ${humidity.toFixed(2)}%`);
 
-    await dbClient.writePoints([
-        createTemperatureWritePoint("basement", "celcius", temperature),
-        createTemperatureWritePoint("basement", "fahrenheit", toFahrenheit(temperature)),
-        createHumidityWritePoint("basement", humidity)
-    ]);
+    const store = new Store({
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME,
+        schema: Object.values(schemas)
+    });
+    const locationTag = { location: "basement" };
 
-    const results = await dbClient.query(`
-            select status 
-            from device 
-            where location='basement'
-            order by time desc
-            limit 1
-        `);
-    const deviceStatus = results[0].status;
+    await store.write(schemas["temperature"].measurement, { unit: "celcius", ...locationTag }, 
+        { value: temperature });
+    await store.write(schemas["temperature"].measurement, { unit: "fahrenheit", ...locationTag }, 
+        { value: toFahrenheit(temperature) });
+    await store.write(schemas["humidity"].measurement, locationTag, { value: humidity });
 
-    if (humidity > HUMIDITY_THRESHOLD) {
-        if (!deviceStatus) {
-            await fetch(`https://maker.ifttt.com/trigger/${process.env.EVENT_ON}/with/key/${process.env.IFTTT_TOKEN}`, { method: "POST" });
-            console.log("sent on ifttt");
+    const client = new Client();
+    const plug = client.getPlug({ host: process.env.PLUG_IP });
+
+    if (humidity > process.env.HUMIDITY_THRESHOLD) {
+        if (!await plug.getPowerState()) {
+            await plug.setPowerState(true);
         }
-
-        await dbClient.writePoints([
-            createDeviceWritePoint("basement", true) // on
-        ]);
     } else {
-        if (deviceStatus) {
-            await fetch(`https://maker.ifttt.com/trigger/${process.env.EVENT_OFF}/with/key/${process.env.IFTTT_TOKEN}`, { method: "POST" });
-            console.log("sent off ifttt");
+        if (await plug.getPowerState()) {
+            await plug.setPowerState(false);
         }
-
-        await dbClient.writePoints([
-            createDeviceWritePoint("basement", false) // off
-        ]);
     }
+
+    await store.write(schemas["device"].measurement, locationTag, { status: await plug.getPowerState() });
 })();

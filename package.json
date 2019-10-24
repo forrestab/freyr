@@ -10,6 +10,6 @@
     "dotenv": "^8.1.0",
     "influx": "^5.4.2",
     "node-dht-sensor": "^0.4.0",
-    "node-fetch": "^2.6.0"
+    "tplink-smarthome-api": "^1.2.0"
   }
 }
