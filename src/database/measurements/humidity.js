@@ -10,12 +10,4 @@ const schema = {
     }
 };
 
-const createWritePoint = (location, value) => {
-    return {
-        measurement: schema.measurement,
-        tags: { location },
-        fields: { value }
-    };
-};
-
-module.exports = { schema, createWritePoint };
+module.exports = schema;
