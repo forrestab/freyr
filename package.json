@@ -2,14 +2,23 @@
   "name": "freyr",
   "version": "1.0.0",
   "description": "",
-  "main": "src/index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "rimraf ./dist && tsc",
+    "start:dev": "ts-node ./src/main.ts",
+    "start": "node ./dist/main.js"
   },
   "dependencies": {
-    "dotenv": "^8.1.0",
+    "dotenv": "^8.2.0",
     "influx": "^5.4.2",
     "node-dht-sensor": "^0.4.0",
-    "tplink-smarthome-api": "^1.2.0"
+    "tsmediator": "^0.1.5"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^13.1.8",
+    "rimraf": "^3.0.0",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.7.5"
   }
 }
