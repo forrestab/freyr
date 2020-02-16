@@ -1,8 +1,9 @@
 import { BaseMediator, Container } from "tsmediator";
-import { InfluxDB } from "influx";
+
+import InfluxRepository from "../common/influx-repository";
 
 export default class MediatorWithDb extends BaseMediator {
-    constructor(private db: InfluxDB) { 
+    constructor(private repository: InfluxRepository) { 
         super();
     }
 
@@ -12,15 +13,19 @@ export default class MediatorWithDb extends BaseMediator {
 
     private Process(msg: string, payload: any) {
         let handlerClass: any = Container.Get(msg);
-        let handler: any = new handlerClass(this.db);
+        let handler: any = new handlerClass(this.repository);
 
-        /*try {
-            handler.Validate(payload);
-        } catch (error) {
-            throw error;
-        }*/
+        if (typeof handler.Validate === "function") {
+            try {
+                handler.Validate(payload);
+            } catch (error) {
+                throw error;
+            }
+        }
 
-        handler.Log();
+        if (typeof handler.Log === "function") {
+            handler.Log();
+        }
 
         return handler.Handle(payload);
     }

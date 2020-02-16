@@ -1,10 +1,12 @@
 import { ISchemaOptions, FieldType } from "influx";
 
-import HumidityHandler from "./handler";
+import HumidityHandler from "./humidity-handler";
 
 export default {
     measurement: HumidityHandler.Type,
-    tags: [ ],
+    tags: [ 
+        "deviceId"
+    ],
     fields: {
         value: FieldType.FLOAT
     }

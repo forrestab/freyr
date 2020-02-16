@@ -1,21 +1,23 @@
 import { InfluxDB } from "influx";
-import { read, ReadResult } from "node-dht-sensor";
 
-import DbConfig from "./common/database/db-config";
-import { TemperatureHandler, TemperatureSchema, Temperature } from "./features/temperature";
-import { HumidityHandler, HumiditySchema } from "./features/humidity";
-import Measurement from "./common/measurement";
+import { TemperatureSchema } from "./measurements/temperature";
+import { HumiditySchema } from "./measurements/humidity";
 import MediatorWithDb from "./common/mediator";
-
-import "./env";
+import Config from "./common/config";
+import InfluxRepository from "./common/influx-repository";
+import { SensorService } from "./services/sensor";
+import { WeatherService } from "./services/weather";
 
 (async () => {
-    let dbConfig: DbConfig = new DbConfig(TemperatureSchema, HumiditySchema);
-    let influx: InfluxDB = new InfluxDB(dbConfig);
-    let mediator: MediatorWithDb = new MediatorWithDb(influx);
+    let config: Config = await Config.load();
+    let db: InfluxDB = new InfluxDB(config.database.toInfluxConfig(TemperatureSchema, HumiditySchema));
+    let repository: InfluxRepository = new InfluxRepository(db);
+    let mediator: MediatorWithDb = new MediatorWithDb(repository);
+    let sensor: SensorService = new SensorService(config.sensor, mediator);
+    let weather: WeatherService = new WeatherService(config.weather, mediator);
 
-    let result: ReadResult = await read(process.env.SENSOR_TYPE, process.env.SENSOR_PIN);
-    
-    await mediator.Send(TemperatureHandler.Type, new Measurement<Temperature>(new Temperature(result.temperature)));
-    await mediator.Send(HumidityHandler.Type, new Measurement<number>(result.humidity));
+    await sensor.read();
+    await weather.getCurrentByCityId(config.weather.cityId);
+
+    await repository.save();
 })();

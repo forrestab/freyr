@@ -12,11 +12,13 @@
     "dotenv": "^8.2.0",
     "influx": "^5.4.2",
     "node-dht-sensor": "^0.4.0",
+    "node-fetch": "^2.6.0",
     "tsmediator": "^0.1.5"
   },
   "devDependencies": {
     "@types/dotenv": "^8.2.0",
     "@types/node": "^13.1.8",
+    "@types/node-fetch": "^2.5.4",
     "rimraf": "^3.0.0",
     "ts-node": "^8.6.2",
     "typescript": "^3.7.5"
