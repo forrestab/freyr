@@ -7,6 +7,7 @@ import { HumidityHandler, Humidity } from "../../measurements/humidity";
 import { SourceTag } from "../../measurements/tags";
 import Measurement from "../../measurements/measurement";
 import SensorResult, { SensorType } from "./sensor-result";
+import { contains } from "../../common/utils/string";
 
 export default class GatewayService {
     private url: string;
@@ -25,7 +26,7 @@ export default class GatewayService {
             // Assuming `etag=null` to be virtual sensors and I want to ignore those
             .then((sensors: any) => sensors.filter((sensor: any) => sensor.etag !== null))
             // Exclude measurements not currently being collected
-            .then((sensors: any) => sensors.filter((sensor: any) => sensor.type.toLowerCase().includes(...this.config.allowedSensors)))
+            .then((sensors: any) => sensors.filter((sensor: any) => contains(sensor.type, this.config.allowedSensors)))
             .then((sensors: any) => sensors.map((sensor: any) => SensorResult.create(sensor)));     
 
         for (let sensor of sensors) {
