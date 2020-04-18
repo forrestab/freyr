@@ -20,8 +20,8 @@ export default class Config {
         config.sensor = new SensorConfig(env.SENSOR_TYPE, env.SENSOR_PIN);
         config.database = new DatabaseConfig(env.DB_HOST, env.DB_NAME);
         config.weather = new WeatherConfig(env.WEATHER_APP_ID, env.WEATHER_CITY_ID);
-        config.gateway = new GatewayConfig(env.GATEWAY_HOST, parseInt(env.GATEWAY_PORT), env.GATEWAY_API_KEY,
-            env.GATEWAY_ALLOWED_SENSORS.split(","));
+        config.gateway = new GatewayConfig(env.GATEWAY_HOST, parseInt(env.GATEWAY_PORT), 
+            env.GATEWAY_API_KEY, env.GATEWAY_ALLOWED_SENSORS.split(","));
 
         return config;
     }

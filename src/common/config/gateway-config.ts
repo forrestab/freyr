@@ -1,4 +1,4 @@
-export default class SensorConfig {
+export default class GatewayConfig {
     constructor(
         public host: string,
         public port: number,
