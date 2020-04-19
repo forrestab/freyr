@@ -11,7 +11,6 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "influx": "^5.4.2",
-    "node-dht-sensor": "^0.4.0",
     "node-fetch": "^2.6.0",
     "tsmediator": "^0.1.5"
   },
