@@ -8,8 +8,11 @@ import InfluxRepository from "./common/influx-repository";
 import { WeatherService } from "./services/weather";
 import { GatewayService } from "./services/gateway";
 
-(async () => {
-    let config: Config = await Config.load();
+const log = console.log;
+
+export default async function run(config: Config) {
+    log("Start reading sensors");
+
     let db: InfluxDB = new InfluxDB(config.database.toInfluxConfig(TemperatureSchema, HumiditySchema));
     let repository: InfluxRepository = new InfluxRepository(db);
     let mediator: MediatorWithDb = new MediatorWithDb(repository);
@@ -20,4 +23,6 @@ import { GatewayService } from "./services/gateway";
     await gateway.read();
 
     await repository.save();
-})();
+
+    log("End reading sensors");
+};

@@ -5,12 +5,14 @@ import { readFileAsync } from "../utils/fs";
 import DatabaseConfig from "./database-config";
 import WeatherConfig from "./weather-config";
 import GatewayConfig from "./gateway-config";
+import ScheduleConfig from "./schedule-config";
 
 export default class Config {
     private static configFile: string = "/../../../.env";
     public database!: DatabaseConfig;
     public weather!: WeatherConfig;
     public gateway!: GatewayConfig;
+    public schedule!: ScheduleConfig;
 
     public static async load(): Promise<Config> {
         let env: any = null;        
@@ -26,6 +28,7 @@ export default class Config {
         config.weather = new WeatherConfig(env.WEATHER_APP_ID, env.WEATHER_CITY_ID);
         config.gateway = new GatewayConfig(env.GATEWAY_HOST, parseInt(env.GATEWAY_PORT), 
             env.GATEWAY_API_KEY, env.GATEWAY_ALLOWED_SENSORS.split(","));
+        config.schedule = new ScheduleConfig(env.SCHEDULE_CRON);
 
         return config;
     }
