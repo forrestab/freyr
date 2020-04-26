@@ -1,27 +1,34 @@
 import { join } from "path";
-import { parse, DotenvParseOutput } from "dotenv";
+import { parse } from "dotenv";
 
 import { readFileAsync } from "../utils/fs";
 import DatabaseConfig from "./database-config";
-import SensorConfig from "./sensor-config";
 import WeatherConfig from "./weather-config";
 import GatewayConfig from "./gateway-config";
+import ScheduleConfig from "./schedule-config";
 
 export default class Config {
+    private static configFile: string = "/../../../.env";
     public database!: DatabaseConfig;
-    public sensor!: SensorConfig;
     public weather!: WeatherConfig;
     public gateway!: GatewayConfig;
+    public schedule!: ScheduleConfig;
 
     public static async load(): Promise<Config> {
-        let env: DotenvParseOutput = parse(await readFileAsync(join(__dirname, "/../../../.env")));
+        let env: any = null;        
         let config: Config = new Config();
 
-        config.sensor = new SensorConfig(env.SENSOR_TYPE, env.SENSOR_PIN);
+        if (process.env.NODE_ENV !== "docker") {
+            env = parse(await readFileAsync(join(__dirname, Config.configFile)));
+        } else {
+            env = process.env;
+        }
+
         config.database = new DatabaseConfig(env.DB_HOST, env.DB_NAME);
         config.weather = new WeatherConfig(env.WEATHER_APP_ID, env.WEATHER_CITY_ID);
         config.gateway = new GatewayConfig(env.GATEWAY_HOST, parseInt(env.GATEWAY_PORT), 
             env.GATEWAY_API_KEY, env.GATEWAY_ALLOWED_SENSORS.split(","));
+        config.schedule = new ScheduleConfig(env.SCHEDULE_CRON);
 
         return config;
     }
