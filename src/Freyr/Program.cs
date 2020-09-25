@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Coravel;
+using Freyr.Coravel;
+using Freyr.Features.Gateway;
+using Freyr.Features.OpenWeather;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -21,7 +25,14 @@ namespace Freyr
             try
             {
                 Log.Information("{ApplicationName} starting...");
-                await CreateHostBuilder(args, Configuration).RunConsoleAsync();
+                await CreateHostBuilder(args, Configuration).Build()
+                    .UseScheduler(scheduler =>
+                    {
+                        scheduler
+                            .ScheduleGatewayWorker()
+                            .ScheduleOpenWeatherWorker();
+                    })
+                    .RunAsync();
             }
             catch(Exception ex)
             {
@@ -34,12 +45,15 @@ namespace Freyr
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args, IConfiguration configuration) =>
-            new HostBuilder()
+            Host.CreateDefaultBuilder()
                 .ConfigureAppConfiguration(builder => builder.AddConfiguration(configuration))
                 .ConfigureServices((context, services) => 
                 {
                     services
-                        .AddOptions();
+                        .AddOptions()
+                        .AddScheduler()
+                        .AddGateway()
+                        .AddOpenWeather();
                 })
                 .ConfigureLogging(logging => logging.AddSerilog());
 
