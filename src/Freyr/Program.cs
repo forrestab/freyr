@@ -5,6 +5,7 @@ using Freyr.Features.OpenWeather;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Serilog;
 using System;
 using System.IO;
@@ -26,11 +27,11 @@ namespace Freyr
             {
                 Log.Information("{ApplicationName} starting...");
                 await CreateHostBuilder(args, Configuration).Build()
-                    .UseScheduler(scheduler =>
+                    .UseScheduler((scheduler, serviceProvider) =>
                     {
                         scheduler
-                            .ScheduleGatewayWorker()
-                            .ScheduleOpenWeatherWorker();
+                            .ScheduleGatewayWorker(serviceProvider.GetRequiredService<IOptions<GatewayOptions>>())
+                            .ScheduleOpenWeatherWorker(serviceProvider.GetRequiredService<IOptions<OpenWeatherOptions>>());
                     })
                     .RunAsync();
             }
@@ -52,8 +53,8 @@ namespace Freyr
                     services
                         .AddOptions()
                         .AddScheduler()
-                        .AddGateway()
-                        .AddOpenWeather();
+                        .AddGateway(configuration)
+                        .AddOpenWeather(configuration);
                 })
                 .ConfigureLogging(logging => logging.AddSerilog());
 
