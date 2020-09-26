@@ -13,13 +13,10 @@ using System.Threading.Tasks;
 
 namespace Freyr
 {
-    class Program
     public class Program
     {
-        static void Main(string[] args)
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
             IConfiguration Configuration = GetConfiguration(new ConfigurationBuilder());
             Log.Logger = CreateSerilogLogger(Configuration);
 
