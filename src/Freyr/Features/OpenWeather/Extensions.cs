@@ -1,4 +1,5 @@
 using Coravel.Scheduling.Schedule.Interfaces;
+using Freyr.Features.OpenWeather.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -25,6 +26,7 @@ namespace Freyr.Features.OpenWeather
         {
             services
                 .Configure<OpenWeatherOptions>(configuration.GetSection("OpenWeather"))
+                .AddTransient<IOpenWeatherClient, OpenWeatherClient>()
                 .AddTransient<OpenWeatherWorker>();
 
             return services;
